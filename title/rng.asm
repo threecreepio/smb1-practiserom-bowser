@@ -154,7 +154,26 @@ DecRNG:
     tay
     sta PPU_CTRL_REG1
     sta PPU_CTRL_REG2
+    ; ugly special case for going left on 00000, should go to 17FFC
+    lda MathFrameruleDigitStart+0
+    ora MathFrameruleDigitStart+1
+    ora MathFrameruleDigitStart+2
+    ora MathFrameruleDigitStart+3
+    ora MathFrameruleDigitStart+4
+    bne @loop
+    lda #1
+    sta MathFrameruleDigitStart+4
+    lda #7
+    sta MathFrameruleDigitStart+3
+    lda #$F
+    sta MathFrameruleDigitStart+2
+    lda #$F
+    sta MathFrameruleDigitStart+1
+    lda #$C
+    sta MathFrameruleDigitStart+0
+    bne @done
 @loop:
+    ; okay now we can just decrement by one..
     sec
     lda MathFrameruleDigitStart,y
     sbc #1
