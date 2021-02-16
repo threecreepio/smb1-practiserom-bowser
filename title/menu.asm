@@ -16,7 +16,7 @@ MenuTitles:
     $20CA + ($40 * 1)
 
 .define MenuValueLocations \
-    $20D3 + ($40 * 0), \
+    $20D3 + ($40 * 0) - 3, \
     $20D3 + ($40 * 1) - 4
 
 UpdateMenuValueJE:
@@ -28,7 +28,7 @@ UpdateMenuValueJE:
 DrawMenuValueJE:
     tya
     jsr JumpEngine
-    .word DrawValueNormal    ; p-up
+    .word DrawValueString_PUp    ; p-up
     .word DrawValueFramerule ; frame
 
 DrawMenuTitle:
@@ -165,7 +165,7 @@ UpdateValueITC:
     jmp UpdateValueShared
 
 UpdateValuePUps:
-    lda #6
+    lda #3
     sta $0
     jmp UpdateValueShared
 
@@ -208,6 +208,45 @@ DrawValueNormal:
     lda Settables, y
     adc #1
     sta VRAM_Buffer1+3, x
+    lda #0
+    sta VRAM_Buffer1+4, x
+    rts
+
+DrawValueString_PUp:
+    lda Settables,y
+    asl a
+    tax
+    lda PUpStrings,x
+    sta MenuTextPtr
+    lda PUpStrings+1,x
+    sta MenuTextPtr+1
+    lda #5
+    sta MenuTextLen
+    jmp DrawValueString
+
+MenuTextPtr = $C3
+MenuTextLen = $C2
+DrawValueString:
+    clc
+    lda VRAM_Buffer1_Offset
+    tax
+    adc MenuTextLen
+    adc #3
+    sta VRAM_Buffer1_Offset
+    lda MenuValueLocationsHi, y
+    sta VRAM_Buffer1+0, x
+    lda MenuValueLocationsLo, y
+    sta VRAM_Buffer1+1, x
+    lda MenuTextLen
+    sta VRAM_Buffer1+2, x
+    ldy #0
+@CopyNext:
+    lda (MenuTextPtr),y
+    sta VRAM_Buffer1+3, x
+    inx
+    iny
+    cpy MenuTextLen
+    bcc @CopyNext
     lda #0
     sta VRAM_Buffer1+4, x
     rts
@@ -288,6 +327,17 @@ MenuValueLocationsHi: .hibytes MenuValueLocations
 
 MenuTitleLocationsLo: .lobytes MenuTitleLocations
 MenuTitleLocationsHi: .hibytes MenuTitleLocations
+
+PUpStrings:
+.word PUpStrings_Non
+.word PUpStrings_Fir
+.word PUpStrings_SFir
+PUpStrings_Non:
+.byte "NONE "
+PUpStrings_Fir:
+.byte "FIRE "
+PUpStrings_SFir:
+.byte "FIRE!"
 
 .pushseg
 .segment "MENUWRAM"
