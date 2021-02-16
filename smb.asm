@@ -3742,8 +3742,19 @@ AreaDataOfsLoopback:
 ;-------------------------------------------------------------------------------------
 
 LoadAreaPointer:
-             jsr FindAreaPointer  ;find it and store it here
-             sta AreaPointer
+      jsr GetAreaMusic
+      lda #$10
+      sta EntrancePage
+      lda #$02
+      sta AltEntranceControl
+      lda #$7
+      sta WorldNumber
+      lda #$3
+      sta LevelNumber
+      lda #$e5
+      sta AreaPointer
+      rts
+
 GetAreaType: and #%01100000       ;mask out all but d6 and d5
              asl
              rol
@@ -3998,18 +4009,8 @@ E_GroundArea5:
 
 ;level 1-1
 E_GroundArea6:
-      .byte $1e, $c2, $00, $6b, $06, $8b, $86, $63, $b7, $0f, $05
-      .byte $03, $06, $23, $06, $4b, $b7, $bb, $00, $5b, $b7
-      .byte $fb, $37, $3b, $b7, $0f, $0b, $1b, $37
-      .byte $ff
-
 ;level 1-3/5-3
 E_GroundArea7:
-      .byte $2b, $d7, $e3, $03, $c2, $86, $e2, $06, $76, $a5
-      .byte $a3, $8f, $03, $86, $2b, $57, $68, $28, $e9, $28
-      .byte $e5, $83, $24, $8f, $36, $a8, $5b, $03
-      .byte $ff
-
 ;level 2-3/7-3
 E_GroundArea8:
       .byte $0f, $02, $78, $40, $48, $ce, $f8, $c3, $f8, $c3
@@ -4668,9 +4669,6 @@ L_WaterArea3:
       .byte $fd
 
 ;-------------------------------------------------------------------------------------
-
-;unused space
-      .byte $ff
 
 ;-------------------------------------------------------------------------------------
 
@@ -10441,9 +10439,6 @@ ExScrnBd: rts                     ;leave
 
 ;-------------------------------------------------------------------------------------
 
-;some unused space
-      .byte $ff, $ff, $ff
-
 ;-------------------------------------------------------------------------------------
 ;$01 - enemy buffer offset
 
@@ -15607,7 +15602,6 @@ WinLevelMusData:
       .byte $cd, $d5, $dd, $e3, $ed, $f5, $bb, $b5, $cf, $d5
       .byte $db, $e5, $ed, $f3, $bd, $b3, $d1, $d9, $df, $e9
       .byte $f1, $f7, $bf, $ff, $ff, $ff, $34
-      .byte $00 ;unused byte
 
       .byte $86, $04, $87, $14, $1c, $22, $86, $34, $84, $2c
       .byte $04, $04, $04, $87, $14, $1a, $24, $86, $32, $84
@@ -15685,8 +15679,6 @@ VictoryMusData:
       .byte $83, $12, $14, $04, $18, $1a, $1c, $14
       .byte $26, $22, $1e, $1c, $18, $1e, $22, $0c, $14
 
-;unused space
-      .byte $ff, $ff, $ff
 
 FreqRegLookupTbl:
       .byte $00, $88, $00, $2f, $00, $00
@@ -15737,7 +15729,7 @@ BrickShatterEnvData:
 ;-------------------------------------------------------------------------------------
 ;INTERRUPT VECTORS
 
-.res $FFFA - *, $FF
+.segment "SMBVEC"
       .word NonMaskableInterrupt
       .word Start
       .word $fff0  ;unused

@@ -1,15 +1,26 @@
-SMB1 Practise ROM Builder
-==========================
+SMB Bowser Practise ROM
+========================
 
-Inspired by Pellsson! https://github.com/pellsson/smb
+This patch lets you practise bowser patterns!
 
-This patch adds a stage select, power-up and framerule selection to SMB1 Romhacks (or the original game if so desired.)
+Get the latest version at https://github.com/threecreepio/smb1-practiserom-bowser
 
-For now this only really works well on fairly basic romhacks that don't alter too much of the game code.
+Usage
+-----
 
-How to apply a patch
-====================
+This rom is intended to be used in conjunction with https://3.creep.io/smb1/bowserframes/
 
-The easiest way to patch a romhack is to visit https://3.creep.io/smb1/practiserom, drop your romhack rom into the file select.
+If you fill in the value shown as the "Practise rom" value on that page, it will load up in the practise rom.
 
-If it applies cleanly you can download the resulting file from the page!
+You can use select + left and right to step through patterns one by one, select + up to restart the pattern, select + down to return to menu.
+
+Setup
+-----
+
+The easiest way to apply this patch is to go to https://www.romhacking.net/patch/
+
+Place the Super Mario Bros 1 rom in the "rom file", and the IPS from this archive into the "patch file" and press apply patch!
+
+You can of course use Lunar IPS or FLIPS if you'd prefer.
+
+/threecreepio

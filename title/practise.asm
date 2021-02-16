@@ -1,9 +1,9 @@
 
 ;; Player size + power-up state depending on selected powerups
 StatusSizes:
-.byte $1, $0, $0, $0, $1, $1
+.byte $1, $0, $1
 StatusPowers:
-.byte $0, $1, $2, $0, $1, $2
+.byte $0, $2, $2
 
 ;; Load into the game from the menu
 TStartGame:
@@ -34,12 +34,7 @@ TStartGame:
     lda #Silence             ;silence music
     sta EventMusicQueue
 
-    ldx Settables
-    stx WorldNumber
-    ldx Settables+1
-    stx LevelNumber
-
-    ldx Settables+2
+    ldx SettablePUP
     lda StatusSizes,x
     sta PlayerSize
     lda StatusPowers,x
@@ -124,16 +119,8 @@ PractiseNMI:
     jsr CheckStarflag
     jsr CheckJumpingState
     jsr CheckAreaTimer
-@IncrementFrameruleCounter:
-    ; update framerule counter
-    ldy IntervalTimerControl
-    cpy #$14
-    bne @CheckUpdateSockfolder
-    clc
-    lda #1
-    ldx #(MathInGameFrameruleDigitStart - MathDigits)
-    jsr B10Add
 @CheckUpdateSockfolder:
+    ldy IntervalTimerControl
     tya
     and #3
     cmp #2
@@ -141,13 +128,23 @@ PractiseNMI:
     jsr UpdateSockfolder
 @CheckInput:
     lda JoypadBitMask
-    and #(Select_Button | Start_Button)
+    and #Select_Button
     beq @Done
-    lda HeldButtons
     jsr ReadJoypads
+    lda LastReadButtons
+@CheckForPrevFrame:
+    cmp #(Left_Dir | Select_Button)
+    bne @CheckForNextFrame
+    jmp DecRNG
+@CheckForNextFrame:
+    cmp #(Right_Dir | Select_Button)
+    bne @CheckForRestartLevel
+    jmp IncRNG
 @CheckForRestartLevel:
     cmp #(Up_Dir | Select_Button)
     bne @CheckForReset
+    ldx #$FF
+    txs
     lda #0
     sta PPU_CTRL_REG1
     sta PPU_CTRL_REG2
@@ -162,6 +159,7 @@ PractiseNMI:
     jmp HotReset
 @Done:
     rts
+
 
 
 ;; Game enters here when writing the "MARIO" / "TIME" text
@@ -186,7 +184,7 @@ PractiseWriteTopStatusLine:
     rts
 
 TopStatusText:
-  .byte $20, $43,  21, "RULE x SOCKS TO FRAME"
+  .byte $20, $43,  21, " RNG x SOCKS TO FRAME"
   .byte $20, $59,   4, "TIME"
   .byte $20, $73,   2, $2e, $29  ; coin that shows next to the coin counter
   .byte $23, $c0, $7f, $aa       ; tile attributes for the top row, sets palette
@@ -278,33 +276,35 @@ PractisePrintScore:
 @PrintRule:
     lda VRAM_Buffer1_Offset
     tay
-    adc #(3+6)
+    adc #(3+7)
     sta VRAM_Buffer1_Offset
     lda #$20
     sta VRAM_Buffer1,y
-    lda #$63
+    lda #$62
     sta VRAM_Buffer1+1,y
-    lda #$06
+    lda #$07
     sta VRAM_Buffer1+2,y
     iny
     iny
     iny
     lda #0
-    sta VRAM_Buffer1+6,y
+    sta VRAM_Buffer1+7,y
     lda #$24
-    sta VRAM_Buffer1+4,y
+    sta VRAM_Buffer1+5,y
 
 @PrintRuleDataAtY:
     lda CachedITC
-    sta VRAM_Buffer1+5,y
-    lda MathInGameFrameruleDigitStart+3
+    sta VRAM_Buffer1+6,y
+    lda MathInGameFrameruleDigitStart+4
     sta VRAM_Buffer1+0,y
-    lda MathInGameFrameruleDigitStart+2
+    lda MathInGameFrameruleDigitStart+3
     sta VRAM_Buffer1+1,y
-    lda MathInGameFrameruleDigitStart+1
+    lda MathInGameFrameruleDigitStart+2
     sta VRAM_Buffer1+2,y
-    lda MathInGameFrameruleDigitStart+0
+    lda MathInGameFrameruleDigitStart+1
     sta VRAM_Buffer1+3,y
+    lda MathInGameFrameruleDigitStart+0
+    sta VRAM_Buffer1+4,y
     rts
 
 

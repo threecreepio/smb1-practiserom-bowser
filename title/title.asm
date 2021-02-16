@@ -1,4 +1,5 @@
 .p02
+.linecont +
 .include "ascii.asm"
 .include "../const.inc"
 .import GL_ENTER
@@ -22,18 +23,6 @@ PendingScoreDrawPosition: .byte $00
 CachedITC: .byte $00
 PREVIOUS_BANK: .byte $00
 
-.segment "MENUWRAM"
-Settables: .byte $00, $00, $00, $00
-MenuSelectedItem: .byte $00
-MenuSelectedSubitem: .byte $00
-MathDigits:
-MathFrameruleDigitStart:
-  .byte $00, $00, $00, $00, $00 ; selected framerule
-MathFrameruleDigitEnd:
-MathInGameFrameruleDigitStart:
-  .byte $00, $00, $00, $00, $00 ; ingame framerule
-MathInGameFrameruleDigitEnd:
-
 ;; $7E00-$7FFF -- relocated bank switching code (starts at 7FA4) 
 RelocatedCodeLocation = $7E00
 
@@ -44,8 +33,6 @@ TitleReset3:
     stx PPU_CTRL_REG2
     jsr InitializeMemory
     jsr ForceClearWRAM
-    lda #8
-    sta MathFrameruleDigitStart
 :   lda PPU_STATUS
     bpl :-
 HotReset2:

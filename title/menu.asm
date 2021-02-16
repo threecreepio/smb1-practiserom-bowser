@@ -1,4 +1,64 @@
-SettablesCount = $4
+SettablesCount = $2
+
+.pushseg
+.segment "MENUWRAM"
+Settables:
+SettablePUP: .byte $00
+Settable2:   .byte $00
+.popseg
+
+MenuTitles:
+.byte "P-UP"
+.byte "RNG "
+
+.define MenuTitleLocations \
+    $20CA + ($40 * 0), \
+    $20CA + ($40 * 1)
+
+.define MenuValueLocations \
+    $20D3 + ($40 * 0), \
+    $20D3 + ($40 * 1) - 4
+
+UpdateMenuValueJE:
+    tya
+    jsr JumpEngine
+    .word UpdateValuePUps        ; p-up
+    .word UpdateValueFramerule   ; frame
+
+DrawMenuValueJE:
+    tya
+    jsr JumpEngine
+    .word DrawValueNormal    ; p-up
+    .word DrawValueFramerule ; frame
+
+DrawMenuTitle:
+    clc
+    lda VRAM_Buffer1_Offset
+    tax
+    adc #3 + 4
+    sta VRAM_Buffer1_Offset
+    lda MenuTitleLocationsHi, y
+    sta VRAM_Buffer1+0, x
+    lda MenuTitleLocationsLo, y
+    sta VRAM_Buffer1+1, x
+    lda #4
+    sta VRAM_Buffer1+2, x
+    tya
+    rol a
+    rol a
+    tay
+    lda MenuTitles,y
+    sta VRAM_Buffer1+3, x
+    lda MenuTitles+1,y
+    sta VRAM_Buffer1+4, x
+    lda MenuTitles+2,y
+    sta VRAM_Buffer1+5, x
+    lda MenuTitles+3,y
+    sta VRAM_Buffer1+6, x
+    lda #0
+    sta VRAM_Buffer1+7, x
+    rts
+
 
 MenuReset:
     jsr DrawMenu
@@ -8,7 +68,9 @@ DrawMenu:
     ldy #(SettablesCount-1)
     sty $10
 @KeepDrawing:
-    jsr DrawSelectedValueJE
+    jsr DrawMenuTitle
+    ldy $10
+    jsr DrawMenuValueJE
     ldy $10
     dey
     sty $10
@@ -26,7 +88,7 @@ MenuNMI:
     and #%00001111
     beq @SELECT
     ldy MenuSelectedItem
-    jsr UpdateSelectedValueJE
+    jsr UpdateMenuValueJE
     jmp RenderMenu
 @SELECT:
     lda PressedButtons
@@ -92,45 +154,14 @@ DrawSelectionMarkers:
     sta Sprite_Tilenumber + (2 * SpriteLen)
     rts
 
-UpdateSelectedValueJE:
-    tya
-    jsr JumpEngine
-    .word UpdateValueWorldNumber ; world
-    .word UpdateValueLevelNumber ; level
-    .word UpdateValuePUps        ; p-up
-    .word UpdateValueFramerule   ; framerule
-
-DrawSelectedValueJE:
-    tya
-    jsr JumpEngine
-    .word DrawValueNormal    ; world
-    .word DrawValueNormal    ; level
-    .word DrawValueNormal    ; p-up
-    .word DrawValueFramerule ; framerule
-
-UpdateValueWorldNumber:
+UpdateValueITC:
     ldx #$FF
     lda HeldButtons
     and #%10000000
     bne @Skip
-    jsr BANK_LoadWorldCount
-    ldx WorldNumber
+    ldx #3
     @Skip:
     stx $0
-    ldy #0
-    sty Settables+1 ; clear level counter
-    jmp UpdateValueShared
-
-UpdateValueLevelNumber:
-    ldx #$FF
-    lda HeldButtons
-    and #%10000000
-    bne @Skip
-    jsr BANK_LoadLevelCount
-    ldx LevelNumber
-    @Skip:
-    stx $0
-    ldy #1
     jmp UpdateValueShared
 
 UpdateValuePUps:
@@ -168,9 +199,9 @@ DrawValueNormal:
     tax
     adc #4
     sta VRAM_Buffer1_Offset
-    lda SettableRenderLocationsHi, y
+    lda MenuValueLocationsHi, y
     sta VRAM_Buffer1+0, x
-    lda SettableRenderLocationsLo, y
+    lda MenuValueLocationsLo, y
     sta VRAM_Buffer1+1, x
     lda #1
     sta VRAM_Buffer1+2, x
@@ -199,9 +230,9 @@ UpdateValueFramerule:
 @store_selected:
     txa
     bpl @not_under
-    lda #3
+    lda #4
 @not_under:
-    cmp #4
+    cmp #5
     bcc @not_over
     lda #0
 @not_over:
@@ -215,10 +246,10 @@ UpdateValueFramerule:
     beq @increase
     dey
     bpl @store_value
-    ldy #8
+    ldy #$E
 @increase:
     iny
-    cpy #$A
+    cpy #$10
     bne @store_value
     ldy #0
 @store_value:
@@ -230,26 +261,44 @@ DrawValueFramerule:
     clc
     lda VRAM_Buffer1_Offset
     tax
-    adc #7
+    adc #8
     sta VRAM_Buffer1_Offset
-    lda SettableRenderLocationsHi, y
+    lda MenuValueLocationsHi, y
     sta VRAM_Buffer1+0, x
-    lda SettableRenderLocationsLo, y
+    lda MenuValueLocationsLo, y
     sta VRAM_Buffer1+1, x
-    lda #4
+    lda #5
     sta VRAM_Buffer1+2, x
     lda MathFrameruleDigitStart+0
-    sta VRAM_Buffer1+3+3, x
+    sta VRAM_Buffer1+3+4, x
     lda MathFrameruleDigitStart+1
-    sta VRAM_Buffer1+3+2, x
+    sta VRAM_Buffer1+3+3, x
     lda MathFrameruleDigitStart+2
-    sta VRAM_Buffer1+3+1, x
+    sta VRAM_Buffer1+3+2, x
     lda MathFrameruleDigitStart+3
+    sta VRAM_Buffer1+3+1, x
+    lda MathFrameruleDigitStart+4
     sta VRAM_Buffer1+3+0, x
     lda #0
-    sta VRAM_Buffer1+3+4, x
+    sta VRAM_Buffer1+3+5, x
     rts
 
-.define SettableRenderLocations $20D3, $2113, $2153, $2190
-SettableRenderLocationsLo: .lobytes SettableRenderLocations
-SettableRenderLocationsHi: .hibytes SettableRenderLocations
+MenuValueLocationsLo: .lobytes MenuValueLocations
+MenuValueLocationsHi: .hibytes MenuValueLocations
+
+MenuTitleLocationsLo: .lobytes MenuTitleLocations
+MenuTitleLocationsHi: .hibytes MenuTitleLocations
+
+.pushseg
+.segment "MENUWRAM"
+MenuSelectedItem: .byte $00
+MenuSelectedSubitem: .byte $00
+RNGExtraCycle: .byte $00
+MathDigits:
+MathFrameruleDigitStart:
+  .byte $00, $00, $00, $00, $00 ; selected framerule
+MathFrameruleDigitEnd:
+MathInGameFrameruleDigitStart:
+  .byte $00, $00, $00, $00, $00 ; ingame framerule
+MathInGameFrameruleDigitEnd:
+.popseg
